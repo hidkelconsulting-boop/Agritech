@@ -1,0 +1,253 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  WORKER
+}
+
+enum SubscriptionTier {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+model User {
+  id           String      @id @default(cuid())
+  email        String      @unique
+  passwordHash String
+  fullName     String
+  role         Role        @default(WORKER)
+  orgMemberships OrganizationMember[]
+  memberships  Membership[]
+  assignedTasks Task[] @relation("TaskAssignee")
+  createdTasks  Task[] @relation("TaskCreator")
+  reportedIncidents Incident[] @relation("IncidentReporter")
+  resolvedIncidents Incident[] @relation("IncidentResolver")
+  auditLogs    AuditLog[]
+  refreshTokens RefreshToken[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model Organization {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  name          String
+  members       OrganizationMember[]
+  farms         Farm[]
+  subscriptions Subscription[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model OrganizationMember {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String
+  role           Role
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+}
+
+model Subscription {
+  id                   String @id @default(cuid())
+  organizationId       String
+  tier                 SubscriptionTier @default(FREE)
+  status               SubscriptionStatus @default(TRIAL)
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  renewsAt             DateTime?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  organization         Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, status])
+}
+
+model Farm {
+  id          String       @id @default(cuid())
+  slug        String       @unique
+  name        String
+  location    String?
+  organizationId String?
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  memberships Membership[]
+  zones       ProductionZone[]
+  tasks       Task[]
+  incidents   Incident[]
+  mediaAssets MediaAsset[]
+  auditLogs   AuditLog[]
+  alerts      Alert[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([organizationId])
+}
+
+model Membership {
+  id        String   @id @default(cuid())
+  userId    String
+  farmId    String
+  role      Role
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  farm      Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, farmId])
+  @@index([farmId])
+}
+
+model ProductionZone {
+  id        String   @id @default(cuid())
+  farmId    String
+  name      String
+  zoneType  String
+  farm      Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  tasks     Task[]
+  incidents Incident[]
+  createdAt DateTime @default(now())
+
+  @@index([farmId])
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  farmId      String
+  zoneId      String?
+  assignedToUserId String?
+  createdByUserId String?
+  title       String
+  status      String   @default("todo")
+  priority    String   @default("normal")
+  dueAt       DateTime?
+  completedAt DateTime?
+  farm        Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  zone        ProductionZone? @relation(fields: [zoneId], references: [id], onDelete: SetNull)
+  assignedTo  User? @relation("TaskAssignee", fields: [assignedToUserId], references: [id], onDelete: SetNull)
+  createdBy   User? @relation("TaskCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  mediaAssets MediaAsset[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([farmId, status])
+  @@index([assignedToUserId])
+}
+
+model Incident {
+  id          String   @id @default(cuid())
+  farmId      String
+  zoneId      String?
+  reportedByUserId String?
+  resolvedByUserId String?
+  title       String
+  severity    String   @default("medium")
+  status      String   @default("open")
+  description String?
+  farm        Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  zone        ProductionZone? @relation(fields: [zoneId], references: [id], onDelete: SetNull)
+  reportedBy  User? @relation("IncidentReporter", fields: [reportedByUserId], references: [id], onDelete: SetNull)
+  resolvedBy  User? @relation("IncidentResolver", fields: [resolvedByUserId], references: [id], onDelete: SetNull)
+  mediaAssets MediaAsset[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([farmId, status])
+}
+
+model MediaAsset {
+  id         String   @id @default(cuid())
+  farmId     String
+  taskId     String?
+  incidentId String?
+  filePath   String
+  mimeType   String
+  fileSize   Int
+  uploadedByUserId String
+  farm       Farm @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  task       Task? @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  incident   Incident? @relation(fields: [incidentId], references: [id], onDelete: SetNull)
+  analyses   AiAnalysis[]
+  createdAt  DateTime @default(now())
+
+  @@index([farmId, createdAt])
+}
+
+model AiAnalysis {
+  id           String   @id @default(cuid())
+  farmId       String
+  mediaAssetId String
+  model        String
+  status       String   @default("completed")
+  summary      String
+  confidence   String?
+  rawJson      String?
+  createdAt    DateTime @default(now())
+  mediaAsset   MediaAsset @relation(fields: [mediaAssetId], references: [id], onDelete: Cascade)
+
+  @@index([farmId, createdAt])
+  @@index([mediaAssetId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  farmId     String?
+  actorUserId String?
+  action     String
+  resourceType String
+  resourceId String?
+  details    String?
+  farm       Farm? @relation(fields: [farmId], references: [id], onDelete: SetNull)
+  actor      User? @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+  createdAt  DateTime @default(now())
+
+  @@index([farmId, createdAt])
+  @@index([actorUserId, createdAt])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([tokenHash])
+}
+
+model Alert {
+  id         String    @id @default(cuid())
+  farmId     String
+  sourceType String
+  sourceId   String
+  title      String
+  message    String
+  severity   String    @default("medium")
+  readAt     DateTime?
+  farm       Farm      @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
+
+  @@index([farmId, readAt])
+  @@index([farmId, createdAt])
+}

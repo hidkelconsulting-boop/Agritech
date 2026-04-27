@@ -1,0 +1,27 @@
+{
+  "name": "agritech-saas",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace @agritech/api\" \"npm run dev --workspace web\"",
+    "dev:full": "concurrently \"npm run dev --workspace @agritech/api\" \"npm run dev:worker --workspace @agritech/api\" \"npm run dev --workspace web\"",
+    "dev:api": "npm run dev --workspace @agritech/api",
+    "dev:worker": "npm run dev:worker --workspace @agritech/api",
+    "dev:web": "npm run dev --workspace web",
+    "build": "npm run build --workspace @agritech/api && npm run build --workspace web",
+    "lint": "npm run lint --workspace @agritech/api && npm run lint --workspace web",
+    "db:generate": "npm run db:generate --workspace @agritech/api",
+    "db:migrate": "npm run db:migrate --workspace @agritech/api",
+    "db:seed": "npm run db:seed --workspace @agritech/api",
+    "db:reset": "npm run db:reset --workspace @agritech/api",
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

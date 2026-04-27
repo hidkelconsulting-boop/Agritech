@@ -1,0 +1,20 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^mkdir -p /Users/jessicakebi/Downloads/Agritech/apps/api/prisma/migrations/20260403000001_add_alerts$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^cd /Users/jessicakebi/Downloads/Agritech/apps/api && npx prisma generate 2>&1 \\| tail -10$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^cd /Users/jessicakebi/Downloads/Agritech && npx tsc -p apps/api/tsconfig\\.json --noEmit 2>&1 \\| head -30$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^open -a Docker && sleep 5 && docker compose -f /Users/jessicakebi/Downloads/Agritech/docker-compose\\.yml up -d 2>&1 \\| tail -15$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}
