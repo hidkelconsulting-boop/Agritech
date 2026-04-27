@@ -196,7 +196,7 @@ export default function AppShell({ farmId, farmName, dashboard, tasks: initialTa
         <p className="mt-2 text-slate-600">Workflow chef de site, execution terrain, incidents, preuves photo.</p>
         <div className="mt-3 flex gap-2">
           <a href="/admin" className="rounded bg-slate-100 px-3 py-1 text-sm">Super Admin</a>
-                    <a href="/app/analytics" className="rounded bg-slate-100 px-3 py-1 text-sm">Analytics</a>
+          {/* LEGACY - sprint demo: <a href="/app/analytics" className="rounded bg-slate-100 px-3 py-1 text-sm">Analytics</a> */}
           <button onClick={logout} className="rounded bg-slate-900 px-3 py-1 text-sm text-white">Se deconnecter</button>
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-5">

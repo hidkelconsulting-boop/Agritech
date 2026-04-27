@@ -28,9 +28,9 @@ export default function OpsDashboardPage() {
           Suivez vos fermes, priorisez les interventions et gardez le controle sur l&apos;execution terrain en temps reel.
         </p>
         <div className="mt-5 flex flex-wrap gap-2">
-          <Link href="/ops/interventions" className="rounded-xl bg-[#d7e675] px-4 py-2 font-semibold text-[#1b2f22]">Creer une intervention</Link>
-          <Link href="/ops/incidents" className="rounded-xl border border-white/55 bg-white/10 px-4 py-2 font-semibold">Signaler un incident</Link>
-          <Link href="/ops/fermes" className="rounded-xl border border-white/55 bg-white/10 px-4 py-2 font-semibold">Voir les fermes</Link>
+          {/* LEGACY - sprint demo: <Link href="/ops/interventions" className="rounded-xl bg-[#d7e675] px-4 py-2 font-semibold text-[#1b2f22]">Creer une intervention</Link> */}
+          {/* LEGACY - sprint demo: <Link href="/ops/incidents" className="rounded-xl border border-white/55 bg-white/10 px-4 py-2 font-semibold">Signaler un incident</Link> */}
+          {/* LEGACY - sprint demo: <Link href="/ops/fermes" className="rounded-xl border border-white/55 bg-white/10 px-4 py-2 font-semibold">Voir les fermes</Link> */}
         </div>
       </section>
 
@@ -84,7 +84,7 @@ export default function OpsDashboardPage() {
               <p className="mt-2 text-sm text-[#506352]">Surface: {farm.surface} · Parcelles: {farm.plots}</p>
               <p className="text-sm text-[#506352]">Equipes: {farm.teams} · Interventions: {farm.openOps}</p>
               <p className="text-sm text-[#506352]">Incidents: {farm.incidents} · Statut: {farm.status}</p>
-              <Link href="/ops/fermes" className="mt-3 inline-block rounded-lg border px-3 py-1 text-sm">Ouvrir la ferme</Link>
+              {/* LEGACY - sprint demo: <Link href="/ops/fermes" className="mt-3 inline-block rounded-lg border px-3 py-1 text-sm">Ouvrir la ferme</Link> */}
             </article>
           ))}
         </div>

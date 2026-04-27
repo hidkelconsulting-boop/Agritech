@@ -20,8 +20,8 @@ export default function DashboardPage() {
         subtitle="Suivez vos fermes, priorisez les interventions et gardez le controle sur l'execution terrain en temps reel."
         actions={
           <>
-            <Link href="/app/farms" className="rounded-xl border px-4 py-2 text-sm font-semibold">Voir les fermes</Link>
-            <Link href="/app/interventions" className="rounded-xl bg-[#2f6a44] px-4 py-2 text-sm font-semibold text-white">Creer une intervention</Link>
+            {/* LEGACY - sprint demo: <Link href="/app/farms" className="rounded-xl border px-4 py-2 text-sm font-semibold">Voir les fermes</Link> */}
+            {/* LEGACY - sprint demo: <Link href="/app/interventions" className="rounded-xl bg-[#2f6a44] px-4 py-2 text-sm font-semibold text-white">Creer une intervention</Link> */}
           </>
         }
       >

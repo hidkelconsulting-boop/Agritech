@@ -58,7 +58,7 @@ export default function AdminPanel({ initialOrganizations }: Props) {
         <p className="mt-2 text-slate-600">Pilotage des organisations SaaS et des abonnements.</p>
         <div className="mt-3 flex gap-2">
           <button className="rounded bg-slate-100 px-3 py-1 text-sm" onClick={refreshOrganizations}>Rafraichir</button>
-          <a href="/app" className="rounded bg-slate-900 px-3 py-1 text-sm text-white">Retour cockpit</a>
+          {/* LEGACY - sprint demo: <a href="/app" className="rounded bg-slate-900 px-3 py-1 text-sm text-white">Retour cockpit</a> */}
         </div>
         {message ? <p className="mt-3 text-sm text-emerald-700">{message}</p> : null}
       </header>

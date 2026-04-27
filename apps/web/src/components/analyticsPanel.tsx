@@ -93,7 +93,7 @@ export default function AnalyticsPanel({ farmName, overview, timeseries }: Props
                 </button>
               ))}
             </div>
-            <Link href="/app" className="text-sm text-gray-500 hover:text-gray-800">← Cockpit</Link>
+            {/* LEGACY - sprint demo: <Link href="/app" className="text-sm text-gray-500 hover:text-gray-800">← Cockpit</Link> */}
           </div>
         </div>
 

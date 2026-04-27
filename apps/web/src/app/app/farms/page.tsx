@@ -37,8 +37,8 @@ export default function FarmsPage() {
               <p className="text-sm font-semibold text-[#2d4f39]">Statut: {farm.status}</p>
               <div className="mt-3 flex gap-2 text-sm">
                 <Link href={`/app/farms/${farm.id}`} className="rounded-lg border px-2 py-1">Voir les details</Link>
-                <Link href="/app/parcels" className="rounded-lg border px-2 py-1">Voir les parcelles</Link>
-                <Link href="/app/interventions" className="rounded-lg border px-2 py-1">Voir les interventions</Link>
+                {/* LEGACY - sprint demo: <Link href="/app/parcels" className="rounded-lg border px-2 py-1">Voir les parcelles</Link> */}
+                {/* LEGACY - sprint demo: <Link href="/app/interventions" className="rounded-lg border px-2 py-1">Voir les interventions</Link> */}
               </div>
             </article>
           ))}
