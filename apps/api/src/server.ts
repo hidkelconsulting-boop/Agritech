@@ -1140,6 +1140,250 @@ app.delete("/farms/:farmId/alerts/:alertId", { preHandler: [async (req, reply) =
   return reply.status(204).send();
 });
 
+// ─── Référentiel métier — fiches validées ────────────────────────────────────
+
+const STATUTS_VALIDES = ["suggestion_ia", "a_valider", "valide", "rejete", "archive"] as const;
+const TYPES_VALIDES = [
+  "ration",
+  "recette-alimentaire",
+  "protocole-sanitaire",
+  "fertilisation",
+  "recyclage",
+  "synergie-filieres",
+  "calendrier",
+  "seuil-technique",
+  "tache-guidee",
+  "alerte",
+] as const;
+
+const ficheCreateSchema = z.object({
+  filiere: z.string(),
+  type: z.enum(TYPES_VALIDES),
+  titre: z.string().min(3),
+  description: z.string(),
+  formulationIA: z.string(),
+  ingredients: z.array(z.object({ libelle: z.string(), quantite: z.string(), unite: z.string(), commentaire: z.string().optional() })).optional(),
+  quantitesDetaillees: z.string().optional(),
+  conditionsUtilisation: z.array(z.string()).default([]),
+  risquesEtPrecautions: z.array(z.string()).default([]),
+  hypothesesIA: z.array(z.string()).default([]),
+  informationsManquantes: z.array(z.string()).default([]),
+  source: z.string(),
+  statut: z.enum(STATUTS_VALIDES).default("suggestion_ia"),
+});
+
+const validerSchema = z.object({
+  validePar: z.string().min(1, "Nom du validateur requis"),
+  justificationValidation: z.string().min(1, "Justification obligatoire"),
+  commentaireExpert: z.string().optional(),
+  testSurPetiteZone: z.boolean().default(false),
+  visibleOuvrier: z.boolean().default(true),
+  visibleResponsable: z.boolean().default(true),
+});
+
+const rejeterSchema = z.object({
+  validePar: z.string().min(1, "Nom du validateur requis"),
+  raisonRejet: z.string().min(1, "Raison du rejet obligatoire"),
+  commentaireExpert: z.string().optional(),
+});
+
+app.get(
+  "/farms/:farmId/referentiel",
+  { preHandler: [async (req, reply) => requirePermission(req, reply, "referentiel.read")] },
+  async (request) => {
+    const farmId = (request.params as { farmId: string }).farmId;
+    const { statut, type, filiere, role } = request.query as {
+      statut?: string;
+      type?: string;
+      filiere?: string;
+      role?: "ouvrier" | "responsable" | "proprietaire";
+    };
+
+    const where: Record<string, unknown> = { farmId };
+    if (statut) where.statut = statut;
+    if (type) where.type = type;
+    if (filiere) where.filiere = filiere;
+
+    // Filtrage de visibilité par rôle utilisateur
+    if (role === "ouvrier") {
+      where.statut = "valide";
+      where.visibleOuvrier = true;
+    } else if (role === "responsable") {
+      where.statut = "valide";
+      where.visibleResponsable = true;
+    }
+
+    const fiches = await prisma.referentielFiche.findMany({
+      where,
+      orderBy: { dateProposition: "desc" },
+    });
+    return fiches;
+  },
+);
+
+app.get(
+  "/farms/:farmId/referentiel/:ficheId",
+  { preHandler: [async (req, reply) => requirePermission(req, reply, "referentiel.read")] },
+  async (request, reply) => {
+    const { farmId, ficheId } = request.params as { farmId: string; ficheId: string };
+    const fiche = await prisma.referentielFiche.findFirst({ where: { id: ficheId, farmId } });
+    if (!fiche) return reply.status(404).send({ error: "Fiche introuvable" });
+    return fiche;
+  },
+);
+
+app.post(
+  "/farms/:farmId/referentiel",
+  { preHandler: [async (req, reply) => requirePermission(req, reply, "referentiel.propose")] },
+  async (request, reply) => {
+    const farmId = (request.params as { farmId: string }).farmId;
+    const parsed = ficheCreateSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: "Données invalides", details: parsed.error.flatten() });
+    }
+    const data = parsed.data;
+    const fiche = await prisma.referentielFiche.create({
+      data: {
+        farmId,
+        filiere: data.filiere,
+        type: data.type,
+        titre: data.titre,
+        description: data.description,
+        formulationIA: data.formulationIA,
+        ingredients: data.ingredients ?? undefined,
+        quantitesDetaillees: data.quantitesDetaillees,
+        conditionsUtilisation: data.conditionsUtilisation,
+        risquesEtPrecautions: data.risquesEtPrecautions,
+        hypothesesIA: data.hypothesesIA,
+        informationsManquantes: data.informationsManquantes,
+        source: data.source,
+        statut: data.statut,
+      },
+    });
+    await writeAuditLog({
+      farmId,
+      actorUserId: (request.user as { sub: string }).sub,
+      action: "referentiel.create",
+      resourceType: "ReferentielFiche",
+      resourceId: fiche.id,
+      details: data.titre,
+    });
+    return reply.status(201).send(fiche);
+  },
+);
+
+app.patch(
+  "/farms/:farmId/referentiel/:ficheId/valider",
+  { preHandler: [async (req, reply) => requirePermission(req, reply, "referentiel.valider")] },
+  async (request, reply) => {
+    const { farmId, ficheId } = request.params as { farmId: string; ficheId: string };
+    const parsed = validerSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: "Données invalides", details: parsed.error.flatten() });
+    }
+    const existing = await prisma.referentielFiche.findFirst({ where: { id: ficheId, farmId } });
+    if (!existing) return reply.status(404).send({ error: "Fiche introuvable" });
+
+    const updated = await prisma.referentielFiche.update({
+      where: { id: ficheId },
+      data: {
+        statut: "valide",
+        validePar: parsed.data.validePar,
+        dateValidation: new Date(),
+        justificationValidation: parsed.data.justificationValidation,
+        commentaireExpert: parsed.data.commentaireExpert,
+        testSurPetiteZone: parsed.data.testSurPetiteZone,
+        visibleOuvrier: parsed.data.visibleOuvrier,
+        visibleResponsable: parsed.data.visibleResponsable,
+        visibleProprietaire: true,
+        raisonRejet: null,
+      },
+    });
+    await writeAuditLog({
+      farmId,
+      actorUserId: (request.user as { sub: string }).sub,
+      action: "referentiel.valider",
+      resourceType: "ReferentielFiche",
+      resourceId: ficheId,
+      details: parsed.data.justificationValidation,
+    });
+    return updated;
+  },
+);
+
+app.patch(
+  "/farms/:farmId/referentiel/:ficheId/rejeter",
+  { preHandler: [async (req, reply) => requirePermission(req, reply, "referentiel.valider")] },
+  async (request, reply) => {
+    const { farmId, ficheId } = request.params as { farmId: string; ficheId: string };
+    const parsed = rejeterSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: "Données invalides", details: parsed.error.flatten() });
+    }
+    const existing = await prisma.referentielFiche.findFirst({ where: { id: ficheId, farmId } });
+    if (!existing) return reply.status(404).send({ error: "Fiche introuvable" });
+
+    const updated = await prisma.referentielFiche.update({
+      where: { id: ficheId },
+      data: {
+        statut: "rejete",
+        validePar: parsed.data.validePar,
+        dateValidation: new Date(),
+        raisonRejet: parsed.data.raisonRejet,
+        commentaireExpert: parsed.data.commentaireExpert,
+        justificationValidation: null,
+        testSurPetiteZone: false,
+        visibleOuvrier: false,
+        visibleResponsable: false,
+        visibleProprietaire: true,
+      },
+    });
+    await writeAuditLog({
+      farmId,
+      actorUserId: (request.user as { sub: string }).sub,
+      action: "referentiel.rejeter",
+      resourceType: "ReferentielFiche",
+      resourceId: ficheId,
+      details: parsed.data.raisonRejet,
+    });
+    return updated;
+  },
+);
+
+app.patch(
+  "/farms/:farmId/referentiel/:ficheId/reouvrir",
+  { preHandler: [async (req, reply) => requirePermission(req, reply, "referentiel.valider")] },
+  async (request, reply) => {
+    const { farmId, ficheId } = request.params as { farmId: string; ficheId: string };
+    const existing = await prisma.referentielFiche.findFirst({ where: { id: ficheId, farmId } });
+    if (!existing) return reply.status(404).send({ error: "Fiche introuvable" });
+
+    const updated = await prisma.referentielFiche.update({
+      where: { id: ficheId },
+      data: {
+        statut: "a_valider",
+        validePar: null,
+        dateValidation: null,
+        justificationValidation: null,
+        commentaireExpert: null,
+        raisonRejet: null,
+        testSurPetiteZone: false,
+        visibleOuvrier: false,
+        visibleResponsable: false,
+        visibleProprietaire: true,
+      },
+    });
+    await writeAuditLog({
+      farmId,
+      actorUserId: (request.user as { sub: string }).sub,
+      action: "referentiel.reouvrir",
+      resourceType: "ReferentielFiche",
+      resourceId: ficheId,
+    });
+    return updated;
+  },
+);
+
 const start = async () => {
   try {
     await app.listen({ port: env.apiPort, host: "0.0.0.0" });

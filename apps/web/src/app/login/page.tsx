@@ -1,11 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { writeProfil, type RoleProfil } from "@/lib/profile";
 
-const ROLE_CONFIG = {
+type RoleConfig = {
+  label: string;
+  icon: string;
+  description: string;
+  redirect: string;
+  accent: string;
+  bg: string;
+  defaultEmail: string;
+  profilRole: RoleProfil;
+};
+
+const ROLE_CONFIG: Record<string, RoleConfig> = {
   ouvrier: {
     label: "Ouvrier terrain",
     icon: "🌾",
@@ -14,6 +25,17 @@ const ROLE_CONFIG = {
     accent: "#2f6a44",
     bg: "bg-[#f0f7f1]",
     defaultEmail: "ouvrier@agritech.local",
+    profilRole: "ouvrier",
+  },
+  responsable: {
+    label: "Responsable d'exploitation",
+    icon: "🧭",
+    description: "Piloter les équipes, prioriser, escalader",
+    redirect: "/responsable",
+    accent: "#1d4ed8",
+    bg: "bg-[#eef2f7]",
+    defaultEmail: "responsable@agritech.local",
+    profilRole: "responsable",
   },
   exploitant: {
     label: "Exploitant / Patron",
@@ -23,18 +45,31 @@ const ROLE_CONFIG = {
     accent: "#21352a",
     bg: "bg-[#21352a]",
     defaultEmail: "patron@agritech.local",
+    profilRole: "proprietaire",
   },
-} as const;
+};
 
-type Role = keyof typeof ROLE_CONFIG;
+const PRENOMS_PAR_EMAIL: Record<string, string> = {
+  "ouvrier@agritech.local": "Christelle",
+  "responsable@agritech.local": "Marie",
+  "patron@agritech.local": "Aimé",
+};
+
+function devinePrenom(email: string): string {
+  if (PRENOMS_PAR_EMAIL[email]) return PRENOMS_PAR_EMAIL[email];
+  const local = email.split("@")[0];
+  const cleaned = local.split(/[._-]/)[0].replace(/[^a-zA-Zéèàâî]/g, "");
+  if (!cleaned) return "Utilisateur";
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1).toLowerCase();
+}
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const role = (searchParams.get("role") ?? "exploitant") as Role;
-  const config = ROLE_CONFIG[role] ?? ROLE_CONFIG.exploitant;
+  const roleParam = searchParams.get("role") ?? "exploitant";
+  const config = ROLE_CONFIG[roleParam] ?? ROLE_CONFIG.exploitant;
 
-  const [email, setEmail] = useState(config.defaultEmail);
+  const [email, setEmail] = useState<string>(config.defaultEmail);
   const [password, setPassword] = useState("ChangeMe123!");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -58,19 +93,38 @@ function LoginForm() {
       return;
     }
 
+    // Synchroniser le profil local (ProfileGate) avec la session API
+    writeProfil({
+      prenom: devinePrenom(email),
+      role: config.profilRole,
+      exploitation: config.profilRole !== "ouvrier" ? "Ferme Pilote Nanga" : undefined,
+      equipe: config.profilRole === "ouvrier" ? "Équipe Élevage Nanga" : undefined,
+      createdAt: new Date().toISOString(),
+    });
+
     router.push(config.redirect);
     router.refresh();
   }
 
-  const isDark = role === "exploitant";
+  const isDark = roleParam === "exploitant";
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-[radial-gradient(100%_100%_at_20%_0%,#f6f0df_0%,#e7eadf_45%,#dbe5dc_100%)] px-5">
       {/* Header profil */}
-      <div className={`mb-6 flex flex-col items-center gap-3 rounded-3xl px-8 py-6 text-center shadow ${isDark ? "bg-[#21352a] text-white" : "bg-white"}`}>
+      <div
+        className={`mb-6 flex flex-col items-center gap-3 rounded-3xl px-8 py-6 text-center shadow ${
+          isDark ? "bg-[#21352a] text-white" : "bg-white"
+        }`}
+      >
         <span className="text-5xl">{config.icon}</span>
-        <p className={`text-xl font-black ${isDark ? "text-[#d7e675]" : "text-[#1f3125]"}`}>{config.label}</p>
-        <p className={`text-sm ${isDark ? "text-[#9ab89e]" : "text-[#5a6e5d]"}`}>{config.description}</p>
+        <p
+          className={`text-xl font-black ${isDark ? "text-[#d7e675]" : "text-[#1f3125]"}`}
+        >
+          {config.label}
+        </p>
+        <p className={`text-sm ${isDark ? "text-[#9ab89e]" : "text-[#5a6e5d]"}`}>
+          {config.description}
+        </p>
       </div>
 
       {/* Formulaire */}
@@ -111,7 +165,10 @@ function LoginForm() {
       </form>
 
       {/* Retour */}
-      <Link href="/" className="mt-6 text-xs text-[#6d8b6f] underline underline-offset-2">
+      <Link
+        href="/"
+        className="mt-6 text-xs text-[#6d8b6f] underline underline-offset-2"
+      >
         ← Changer de profil
       </Link>
     </main>

@@ -1,80 +1,87 @@
 import Link from "next/link";
 import { interventionsToday, priorityAlerts } from "@/mock/agri";
+import type { InterventionStatus } from "@/mock/agri";
 
-const statusColors: Record<string, string> = {
-  "En cours": "bg-blue-100 text-blue-700",
-  "Planifiee": "bg-amber-100 text-amber-700",
-  "En retard": "bg-red-100 text-red-700",
-  "Terminee": "bg-green-100 text-green-700",
-  "A planifier": "bg-slate-100 text-slate-600",
-  "A valider": "bg-purple-100 text-purple-700",
+const statusPriority: Record<InterventionStatus, number> = {
+  "En retard": 1,
+  "En cours": 2,
+  "Planifiee": 3,
+  "A planifier": 4,
+  "A valider": 5,
+  "Terminee": 6,
+};
+
+const statusStyle: Record<InterventionStatus, { label: string; bg: string; fg: string }> = {
+  "En retard": { label: "EN RETARD", bg: "#fee2e2", fg: "#b91c1c" },
+  "En cours": { label: "EN COURS", bg: "#dbeafe", fg: "#1d4ed8" },
+  "Planifiee": { label: "PRÉVUE", bg: "#f1f5f9", fg: "#475569" },
+  "A planifier": { label: "À PRÉVOIR", bg: "#f1f5f9", fg: "#475569" },
+  "A valider": { label: "À VALIDER", bg: "#fef3c7", fg: "#b45309" },
+  "Terminee": { label: "TERMINÉ", bg: "#dcfce7", fg: "#15803d" },
 };
 
 export default function MobileTachesPage() {
-  const myTasks = interventionsToday.filter((t) => t.team === "Equipe Irrigation 1" || t.status === "En retard" || t.status === "En cours");
+  const myTasks = interventionsToday
+    .map((t, i) => ({ ...t, idx: i }))
+    .filter((t) => t.status !== "Terminee")
+    .sort((a, b) => statusPriority[a.status] - statusPriority[b.status]);
+
+  const critiques = priorityAlerts.filter((a) => a.level === "Critique");
 
   return (
-    <div className="space-y-5 p-4">
-      {/* Summary strip */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-2xl bg-white p-3 text-center shadow-sm">
-          <p className="text-2xl font-black text-[#2f6a44]">{myTasks.length}</p>
-          <p className="mt-0.5 text-xs text-slate-500">Mes tâches</p>
-        </div>
-        <div className="rounded-2xl bg-white p-3 text-center shadow-sm">
-          <p className="text-2xl font-black text-blue-600">
-            {myTasks.filter((t) => t.status === "En cours").length}
-          </p>
-          <p className="mt-0.5 text-xs text-slate-500">En cours</p>
-        </div>
-        <div className="rounded-2xl bg-white p-3 text-center shadow-sm">
-          <p className="text-2xl font-black text-red-500">
-            {myTasks.filter((t) => t.status === "En retard").length}
-          </p>
-          <p className="mt-0.5 text-xs text-slate-500">En retard</p>
-        </div>
-      </div>
+    <div className="mx-auto flex max-w-md flex-col gap-4 p-4">
+      {/* Bannière critique (élargie) */}
+      {critiques.length > 0 && (
+        <Link
+          href="/mobile/incidents"
+          className="flex min-h-[80px] items-start gap-4 rounded-2xl bg-[#fee2e2] p-4 shadow-sm active:bg-[#fecaca]"
+        >
+          <span className="text-4xl leading-none">⚠️</span>
+          <div className="flex-1">
+            <p className="text-lg font-bold text-[#b91c1c]">
+              {critiques.length} problème{critiques.length > 1 ? "s" : ""} important
+              {critiques.length > 1 ? "s" : ""}
+            </p>
+            <p className="text-base text-[#7c2d12]">Voir les problèmes</p>
+          </div>
+        </Link>
+      )}
 
-      {/* Alert banner */}
-      {priorityAlerts.filter((a) => a.level === "Critique").length > 0 && (
-        <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
-          <span className="font-bold">⚠ {priorityAlerts.filter((a) => a.level === "Critique").length} alerte(s) critique(s)</span> sur votre zone — vérifiez les incidents.
+      <p className="text-base font-bold uppercase tracking-widest text-slate-500">
+        Mes tâches du jour
+      </p>
+
+      {/* Liste tâches : 1 carte = 1 tap = 1 page guidée */}
+      {myTasks.length === 0 && (
+        <div className="rounded-2xl bg-white p-6 text-center shadow-sm">
+          <p className="text-5xl">👍</p>
+          <p className="mt-3 text-xl font-bold text-[#1f3125]">Pas de tâche à faire</p>
         </div>
       )}
 
-      {/* Task list */}
-      <div>
-        <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">Mes interventions du jour</p>
-        <div className="space-y-3">
-          {interventionsToday.map((task, i) => (
-            <div key={i} className="rounded-2xl bg-white p-4 shadow-sm">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1">
-                  <p className="font-bold text-[#1f3125]">{task.intervention}</p>
-                  <p className="mt-0.5 text-sm text-slate-500">
-                    {task.farm} · {task.parcel} · {task.hour}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-400">{task.team}</p>
-                </div>
-                <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[task.status] ?? "bg-slate-100 text-slate-600"}`}>
-                  {task.status}
-                </span>
-              </div>
-              <div className="mt-3 flex gap-2">
-                <Link
-                  href="/mobile/cloturer"
-                  className="flex-1 rounded-xl bg-[#2f6a44] py-2.5 text-center text-sm font-semibold text-white"
-                >
-                  Clôturer
-                </Link>
-                <button className="flex-1 rounded-xl border border-[#d0d8d0] bg-white py-2.5 text-center text-sm font-medium text-slate-600">
-                  Reporter
-                </button>
-              </div>
+      {myTasks.map((task) => {
+        const s = statusStyle[task.status];
+        return (
+          <Link
+            key={task.idx}
+            href={`/mobile/tache/${task.idx}`}
+            className="flex min-h-[100px] items-center gap-4 rounded-2xl bg-white p-4 shadow-sm active:bg-[#eef2ee]"
+          >
+            <span className="text-5xl leading-none">{task.icone ?? "📋"}</span>
+            <div className="flex-1">
+              <span
+                className="inline-block rounded-full px-3 py-1 text-sm font-bold"
+                style={{ backgroundColor: s.bg, color: s.fg }}
+              >
+                {s.label}
+              </span>
+              <p className="mt-2 text-xl font-bold text-[#1f3125]">{task.intervention}</p>
+              <p className="text-lg text-slate-500">{task.parcel}</p>
             </div>
-          ))}
-        </div>
-      </div>
+            <span className="text-3xl leading-none text-slate-400">›</span>
+          </Link>
+        );
+      })}
     </div>
   );
 }

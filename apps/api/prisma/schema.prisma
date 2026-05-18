@@ -97,6 +97,7 @@ model Farm {
   mediaAssets MediaAsset[]
   auditLogs   AuditLog[]
   alerts      Alert[]
+  referentielFiches ReferentielFiche[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
@@ -250,4 +251,48 @@ model Alert {
 
   @@index([farmId, readAt])
   @@index([farmId, createdAt])
+}
+
+model ReferentielFiche {
+  id                       String    @id @default(cuid())
+  farmId                   String
+  farm                     Farm      @relation(fields: [farmId], references: [id], onDelete: Cascade)
+
+  // Identification
+  filiere                  String
+  type                     String
+  titre                    String
+  description              String
+
+  // Formulation IA
+  formulationIA            String
+  ingredients              Json?
+  quantitesDetaillees      String?
+  conditionsUtilisation    Json
+  risquesEtPrecautions     Json
+  hypothesesIA             Json
+  informationsManquantes   Json
+  source                   String
+
+  // Workflow
+  statut                   String    @default("suggestion_ia")
+  validePar                String?
+  dateValidation           DateTime?
+  justificationValidation  String?
+  commentaireExpert        String?
+  raisonRejet              String?
+  testSurPetiteZone        Boolean   @default(false)
+
+  // Visibilité par rôle
+  visibleOuvrier           Boolean   @default(false)
+  visibleResponsable       Boolean   @default(false)
+  visibleProprietaire      Boolean   @default(true)
+
+  dateProposition          DateTime  @default(now())
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+
+  @@index([farmId, statut])
+  @@index([farmId, type])
+  @@index([farmId, filiere])
 }

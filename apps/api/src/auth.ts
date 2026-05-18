@@ -14,6 +14,9 @@ export const rolePermissions: Record<string, string[]> = {
     "media.upload",
     "member.manage",
     "billing.manage",
+    "referentiel.read",
+    "referentiel.propose",
+    "referentiel.valider",
   ],
   MANAGER: [
     "farm.read",
@@ -24,8 +27,18 @@ export const rolePermissions: Record<string, string[]> = {
     "incident.create",
     "incident.update",
     "media.upload",
+    "referentiel.read",
+    "referentiel.propose",
   ],
-  WORKER: ["farm.read", "task.read", "task.update", "incident.read", "incident.create", "media.upload"],
+  WORKER: [
+    "farm.read",
+    "task.read",
+    "task.update",
+    "incident.read",
+    "incident.create",
+    "media.upload",
+    "referentiel.read",
+  ],
 };
 
 export async function requireAuth(request: FastifyRequest, reply: FastifyReply) {

@@ -10,4 +10,6 @@ build
 .DS_Store
 apps/api/dev.db
 apps/api/dev.db-journal
-apps/api/prisma/migrations
+apps/api/uploads/
+# NOTE: prisma/migrations DOIT être commité (besoin du dossier en prod pour `prisma migrate deploy`)
+

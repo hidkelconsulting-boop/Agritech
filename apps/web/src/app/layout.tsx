@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { DemoBanner } from "@/components/demo-banner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,8 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Agritech SaaS Platform",
-  description: "Multi-tenant platform for farm operations and performance.",
+  title: "Agritech · Plateforme de pilotage agricole",
+  description:
+    "Pilotage d'exploitation agricole multi-activité (pisciculture, élevage, volaille, BSF, vergers, aromatiques). Aperçu démonstration.",
 };
 
 export default function RootLayout({
@@ -24,10 +26,13 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="fr"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <DemoBanner />
+        {children}
+      </body>
     </html>
   );
 }

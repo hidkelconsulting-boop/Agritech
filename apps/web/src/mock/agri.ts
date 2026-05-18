@@ -1,6 +1,15 @@
 export type InterventionStatus = "A planifier" | "Planifiee" | "En cours" | "A valider" | "Terminee" | "En retard";
 export type IncidentStatus = "Ouvert" | "En investigation" | "Assigne" | "Traite" | "Cloture";
 export type RiskLevel = "Moyen" | "Eleve" | "Critique";
+export type Criticite = "faible" | "moyenne" | "haute";
+
+export type ProtocoleTache = {
+  pourquoi: string;
+  etapes: string[];
+  signes: string[];
+  preuveRequise: boolean;
+  criticite: Criticite;
+};
 
 export const dashboardKpis = [
   { label: "Fermes actives", value: "2", subtext: "Nanga + Makola" },
@@ -12,13 +21,118 @@ export const dashboardKpis = [
 ];
 
 export const interventionsToday = [
-  { intervention: "Nourrir cabris matin Nanga", farm: "Ferme Nanga-Makola", parcel: "Batiment cabris Nanga", team: "Equipe Elevage Nanga", hour: "06:30", status: "Terminee" as InterventionStatus, site: "Nanga", categorie: "elevage", icone: "🐐" },
-  { intervention: "Verifier pH etang silures", farm: "Ferme Nanga-Makola", parcel: "Etang silures Nanga", team: "Equipe Aquaculture Nanga", hour: "07:00", status: "En cours" as InterventionStatus, site: "Nanga", categorie: "aquaculture", icone: "🐟" },
+  {
+    intervention: "Nourrir cabris matin Nanga", farm: "Ferme Nanga-Makola", parcel: "Batiment cabris Nanga", team: "Equipe Elevage Nanga", hour: "06:30", status: "Terminee" as InterventionStatus, site: "Nanga", categorie: "elevage", icone: "🐐",
+    protocoleRefId: "fic-013",
+    protocole: {
+      pourquoi: "Bien nourrir les cabris le matin leur donne de la force pour toute la journée.",
+      etapes: [
+        "Vérifier que la mangeoire est propre",
+        "Mettre la quantité d'aliment prévue",
+        "Vérifier l'eau propre dans l'abreuvoir",
+        "Regarder si tous les cabris mangent",
+        "Prendre une photo de la mangeoire pleine",
+      ],
+      signes: [
+        "Cabri qui reste seul dans un coin",
+        "Cabri qui boite ou tremble",
+        "Cabri qui refuse de manger",
+        "Yeux ou nez qui coulent",
+      ],
+      preuveRequise: true,
+      criticite: "moyenne",
+    } satisfies ProtocoleTache,
+  },
+  {
+    intervention: "Verifier pH etang silures", farm: "Ferme Nanga-Makola", parcel: "Etang silures Nanga", team: "Equipe Aquaculture Nanga", hour: "07:00", status: "En cours" as InterventionStatus, site: "Nanga", categorie: "aquaculture", icone: "🐟",
+    protocoleRefId: "fic-031",
+    protocole: {
+      pourquoi: "Le pH aide à savoir si l'eau est bonne pour les poissons.",
+      etapes: [
+        "Prendre le test pH",
+        "Mettre la bandelette dans l'eau",
+        "Attendre que la couleur change",
+        "Comparer avec le tableau de couleurs",
+        "Prendre une photo de la bandelette",
+      ],
+      signes: [
+        "Eau très trouble",
+        "Poissons en surface qui respirent fort",
+        "Mauvaise odeur d'eau",
+        "Poissons qui ne mangent pas",
+      ],
+      preuveRequise: true,
+      criticite: "haute",
+    } satisfies ProtocoleTache,
+  },
   { intervention: "Recolter litchis Makola sud", farm: "Ferme Nanga-Makola", parcel: "Verger litchis Makola", team: "Equipe Recolte Makola", hour: "07:30", status: "En retard" as InterventionStatus, site: "Makola", categorie: "verger", icone: "🍈" },
   { intervention: "Distiller lot citronnelle 12", farm: "Ferme Nanga-Makola", parcel: "Atelier distillation Makola", team: "Equipe Distillation Makola", hour: "08:00", status: "A valider" as InterventionStatus, site: "Makola", categorie: "distillation", icone: "🧪" },
-  { intervention: "Vacciner poulets Nanga", farm: "Ferme Nanga-Makola", parcel: "Poulailler chair Nanga", team: "Equipe Volailles Nanga", hour: "08:30", status: "Planifiee" as InterventionStatus, site: "Nanga", categorie: "volaille", icone: "🐔" },
-  { intervention: "Curage bac BSF 2", farm: "Ferme Nanga-Makola", parcel: "Bac BSF fermentation 2", team: "Equipe BSF Nanga", hour: "09:00", status: "A planifier" as InterventionStatus, site: "Nanga", categorie: "bsf", icone: "🪱" },
-  { intervention: "Tailler avocatiers Nanga", farm: "Ferme Nanga-Makola", parcel: "Verger avocatiers Nanga", team: "Equipe Vergers Nanga", hour: "09:30", status: "En cours" as InterventionStatus, site: "Nanga", categorie: "verger", icone: "🥑" },
+  {
+    intervention: "Vacciner poulets Nanga", farm: "Ferme Nanga-Makola", parcel: "Poulailler chair Nanga", team: "Equipe Volailles Nanga", hour: "08:30", status: "Planifiee" as InterventionStatus, site: "Nanga", categorie: "volaille", icone: "🐔",
+    protocoleRefId: "fic-042",
+    protocole: {
+      pourquoi: "La vaccination protège tout le poulailler des maladies.",
+      etapes: [
+        "Préparer le vaccin selon la notice",
+        "Attraper chaque poulet doucement",
+        "Vacciner derrière l'aile",
+        "Marquer le poulet avec la marque du jour",
+        "Prendre une photo du registre rempli",
+      ],
+      signes: [
+        "Poulet abattu ou faible",
+        "Poulet qui ne marche plus",
+        "Crête bleue ou pâle",
+        "Plumes ébouriffées",
+      ],
+      preuveRequise: true,
+      criticite: "haute",
+    } satisfies ProtocoleTache,
+  },
+  {
+    intervention: "Curage bac BSF 2", farm: "Ferme Nanga-Makola", parcel: "Bac BSF fermentation 2", team: "Equipe BSF Nanga", hour: "09:00", status: "A planifier" as InterventionStatus, site: "Nanga", categorie: "bsf", icone: "🪱",
+    protocoleRefId: "fic-043",
+    protocole: {
+      pourquoi: "Un bac propre fait grossir vite les larves de mouches soldates.",
+      etapes: [
+        "Récolter les larves matures avec le tamis",
+        "Vider les restes du bac",
+        "Nettoyer le bac à l'eau",
+        "Remettre une couche d'aliment frais",
+        "Prendre une photo du bac propre",
+      ],
+      signes: [
+        "Odeur très forte d'ammoniaque",
+        "Larves mortes en surface",
+        "Pas de mouvement dans le bac",
+        "Présence de fourmis ou rats",
+      ],
+      preuveRequise: true,
+      criticite: "moyenne",
+    } satisfies ProtocoleTache,
+  },
+  {
+    intervention: "Tailler avocatiers Nanga", farm: "Ferme Nanga-Makola", parcel: "Verger avocatiers Nanga", team: "Equipe Vergers Nanga", hour: "09:30", status: "En cours" as InterventionStatus, site: "Nanga", categorie: "verger", icone: "🥑",
+    protocoleRefId: "fic-044",
+    protocole: {
+      pourquoi: "Tailler les avocatiers fait mieux pousser les fruits et évite les maladies.",
+      etapes: [
+        "Choisir les branches mortes ou malades",
+        "Couper net avec le sécateur propre",
+        "Garder les branches qui donnent vers le haut",
+        "Ramasser les branches coupées",
+        "Prendre une photo de l'arbre taillé",
+      ],
+      signes: [
+        "Taches noires sur les feuilles",
+        "Branches qui suintent",
+        "Fruits qui tombent avant maturité",
+        "Présence d'insectes en grand nombre",
+      ],
+      preuveRequise: true,
+      criticite: "moyenne",
+    } satisfies ProtocoleTache,
+  },
   { intervention: "Recolter maniguette parcelle 1", farm: "Ferme Nanga-Makola", parcel: "Parcelle lippia Makola", team: "Equipe Aromatiques Makola", hour: "10:00", status: "Terminee" as InterventionStatus, site: "Makola", categorie: "aromatiques", icone: "🌿" },
   { intervention: "Nourrir carpes etang Nanga", farm: "Ferme Nanga-Makola", parcel: "Etang carpes Nanga", team: "Equipe Aquaculture Nanga", hour: "10:30", status: "Planifiee" as InterventionStatus, site: "Nanga", categorie: "aquaculture", icone: "🐠" },
   { intervention: "Nettoyer poulailler canards", farm: "Ferme Nanga-Makola", parcel: "Poulailler chair Nanga", team: "Equipe Volailles Nanga", hour: "11:00", status: "A valider" as InterventionStatus, site: "Nanga", categorie: "volaille", icone: "🦆" },
