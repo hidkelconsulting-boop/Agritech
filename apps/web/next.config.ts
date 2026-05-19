@@ -2,22 +2,15 @@ import type { NextConfig } from "next";
 import path from "node:path";
 
 // L'API tourne sur Railway en prod, en local par défaut sur 4000.
-// Le rewrite ci-dessous permet au front d'appeler /api/* sans CORS
-// (les cookies HTTP-only restent same-origin côté navigateur).
-const API_ORIGIN = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+// Les appels au backend passent par les routes Next.js dédiées sous
+// /api/auth/* (login, register, logout) et /api/proxy/[...path] qui
+// gère l'authentification via cookies HTTP-only.
+// L'URL du backend est lue depuis NEXT_PUBLIC_API_URL via @/lib/config.
 
 const nextConfig: NextConfig = {
   output: "standalone",
   turbopack: {
     root: path.join(__dirname, "../.."),
-  },
-  async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: `${API_ORIGIN}/:path*`,
-      },
-    ];
   },
 };
 
