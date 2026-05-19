@@ -9,7 +9,8 @@ function must(name: string, fallback?: string): string {
 }
 
 export const env = {
-  apiPort: Number(process.env.API_PORT ?? 4000),
+  // Railway, Heroku, Render etc. injectent PORT — c'est prioritaire sur API_PORT
+  apiPort: Number(process.env.PORT ?? process.env.API_PORT ?? 4000),
   jwtSecret: must("JWT_SECRET", "change-me-in-production"),
   databaseUrl: must("DATABASE_URL", "file:./dev.db"),
   appEnv: process.env.APP_ENV ?? "development",
